@@ -34,6 +34,11 @@
         private Body[] bodies = null;
 
         /// <summary>
+        /// The currently tracked body
+        /// </summary>
+        private Body currentTrackedBody = null;
+
+        /// <summary>
         /// Number of bodies tracked
         /// </summary>
         private int bodyCount;
@@ -41,17 +46,20 @@
         /// <summary>
         /// Face frame sources
         /// </summary>
-        private FaceFrameSource[] faceFrameSources = null;
-
+//        private FaceFrameSource[] faceFrameSources = null;
+        private FaceFrameSource faceFrameSource = null;
         /// <summary>
         /// Face frame readers
         /// </summary>
-        private FaceFrameReader[] faceFrameReaders = null;
+//        private FaceFrameReader[] faceFrameReaders = null;
+        private FaceFrameReader faceFrameReader = null;
+
 
         /// <summary>
         /// Storage for face frame results
         /// </summary>
-        private FaceFrameResult[] faceFrameResults = null;
+//        private FaceFrameResult[] faceFrameResults = null;
+        private FaceFrameResult faceFrameResult = null;
 
         /// <summary>
         /// Width of display (color space)
@@ -105,19 +113,19 @@
                 | FaceFrameFeatures.MouthOpen;
 
             // create a face frame source + reader to track each face in the FOV
-            this.faceFrameSources = new FaceFrameSource[this.bodyCount];
-            this.faceFrameReaders = new FaceFrameReader[this.bodyCount];
-            for (int i = 0; i < this.bodyCount; i++)
-            {
-                // create the face frame source with the required face frame features and an initial tracking Id of 0
-                this.faceFrameSources[i] = new FaceFrameSource(this.kinectSensor, 0, faceFrameFeatures);
+            this.faceFrameSource = new FaceFrameSource(this.kinectSensor,0,faceFrameFeatures);
+            this.faceFrameReader = this.faceFrameSource.OpenReader();
+            //for (int i = 0; i < this.bodyCount; i++)
+            //{
+            //    // create the face frame source with the required face frame features and an initial tracking Id of 0
+            //    this.faceFrameSources[i] = new FaceFrameSource(this.kinectSensor, 0, faceFrameFeatures);
 
-                // open the corresponding reader
-                this.faceFrameReaders[i] = this.faceFrameSources[i].OpenReader();
-            }
+            //    // open the corresponding reader
+            //    this.faceFrameReaders[i] = this.faceFrameSources[i].OpenReader();
+            //}
 
             // allocate storage to store face frame results for each face in the FOV
-            this.faceFrameResults = new FaceFrameResult[this.bodyCount];
+           // this.faceFrameResult = new FaceFrameResult();
 
             // open the sensor
             this.kinectSensor.Open();
@@ -166,14 +174,16 @@
         /// <param name="e">event arguments</param>
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < this.bodyCount; i++)
-            {
-                if (this.faceFrameReaders[i] != null)
-                {
-                    // wire handler for face frame arrival
-                    this.faceFrameReaders[i].FrameArrived += this.Reader_FaceFrameArrived;
-                }
-            }
+            this.faceFrameReader.FrameArrived += this.Reader_FaceFrameArrived;
+
+            //for (int i = 0; i < this.bodyCount; i++)
+            //{
+            //    if (this.faceFrameReaders[i] != null)
+            //    {
+            //        // wire handler for face frame arrival
+            //        this.faceFrameReaders[i].FrameArrived += this.Reader_FaceFrameArrived;
+            //    }
+            //}
 
             if (this.bodyFrameReader != null)
             {
@@ -200,12 +210,12 @@
                     if (this.ValidateFaceBoxAndPoints(faceFrame.FaceFrameResult))
                     {
                         // store this face frame result to draw later
-                        this.faceFrameResults[index] = faceFrame.FaceFrameResult;
+                        this.faceFrameResult = faceFrame.FaceFrameResult;
                     }
                     else
                     {
                         // indicates that the latest face frame result from this reader is invalid
-                        this.faceFrameResults[index] = null;
+                        this.faceFrameResult = null;
                     }
                 }
             }
@@ -220,15 +230,20 @@
         {
             int index = -1;
 
-            for (int i = 0; i < this.bodyCount; i++)
-            {
-                if (this.faceFrameSources[i] == faceFrameSource)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            return index;
+            
+
+            //for (int i = 0; i < this.bodyCount; i++)
+            //{
+            //    if (this.faceFrameSources[i] == faceFrameSource)
+            //    {
+            //        index = i;
+            //        break;
+            //    }
+            //}
+            //return index;
+
+
+            return 0;
         }
 
         /// <summary>
@@ -246,28 +261,31 @@
                     bodyFrame.GetAndRefreshBodyData(this.bodies);
 
                     // iterate through each face source
-                    for (int i = 0; i < this.bodyCount; i++)
-                    {
+                   // for (int i = 0; i < this.bodyCount; i++)
+                    //{
                         // check if a valid face is tracked in this face source
-                        if (this.faceFrameSources[i].IsTrackingIdValid)
+                        if (this.faceFrameSource.IsTrackingIdValid)
                         {
                             // check if we have valid face frame results
-                            if (this.faceFrameResults[i] != null)
+                            if (this.faceFrameResult != null)
                             {
                                 // draw face frame results
-                                this.DrawFaceFrameResults(i, this.faceFrameResults[i]);
+                                this.DrawFaceFrameResults(1, this.faceFrameResult);
                             }
                         }
                         else
                         {
                             // check if the corresponding body is tracked 
-                            if (this.bodies[i].IsTracked)
+                             for (int i = 0; i < this.bodyCount; i++)
                             {
-                                // update the face frame source to track this body
-                                this.faceFrameSources[i].TrackingId = this.bodies[i].TrackingId;
+                                if (this.bodies[i].IsTracked)
+                                {
+                                    // update the face frame source to track this body
+                                    this.faceFrameSource.TrackingId = this.bodies[i].TrackingId;
+                                    break;
+                                }
                             }
-                        }
-                    }
+                         }
 
                 }
             }
