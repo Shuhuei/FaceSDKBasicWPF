@@ -175,13 +175,11 @@
             {
                 if (faceFrame != null)
                 {
-
                     // check if this face frame has valid face frame results
                     if (this.ValidateFaceBoxAndPoints(faceFrame.FaceFrameResult))
                     {
                         // store this face frame result to draw later
                         this.faceFrameResult = faceFrame.FaceFrameResult;
-                     //   this.DrawFaceFrameResults(this.faceFrameResult);
                     }
                     else
                     {
@@ -219,7 +217,7 @@
                         if (this.faceFrameResult != null)
                         {
                             // draw face frame results
-                           this.DrawFaceFrameResults(1, this.faceFrameResult);
+                             this.DrawFaceFrameResults(this.faceFrameResult);
                         }
                     }
                     else
